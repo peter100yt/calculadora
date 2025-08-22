@@ -4,16 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calc Antibióticos">
+    
     <title>Calculadora de Antibióticos - Fibrose Cística</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
     <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/joaovitorsilva/fibrose-cistica-calc@main/icons/icon-192x192.png">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/joaovitorsilva/fibrose-cistica-calc@main/icons/icon-192x192.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -64,9 +68,58 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             font-size: 24px;
         }
+
+        /* Splash screen para PWA */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .splash-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="min-h-screen gradient-bg">
+    <!-- Splash Screen para PWA -->
+    <div id="splash-screen">
+        <div class="splash-logo">💊</div>
+        <h2 class="text-white text-xl font-semibold mb-4">Calculadora de Antibióticos</h2>
+        <div class="splash-spinner"></div>
+    </div>
+
     <!-- Botão de instalação do PWA -->
     <button id="installButton" aria-label="Instalar aplicativo">📲</button>
 
@@ -139,6 +192,12 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Informações sobre instalação -->
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl card-shadow p-6 mb-8 text-center">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">📲 Instalar o Aplicativo</h3>
+                <p class="text-gray-600">Use o botão "Adicionar à tela inicial" no seu navegador para instalar este app e usá-lo offline!</p>
+            </div>
         </div>
     </div>
 
@@ -190,13 +249,24 @@
     </div>
 
     <script>
+        // Esconder splash screen após carregamento
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 500);
+            }, 1500);
+        });
+
         // Definir data padrão como hoje
         document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
 
         // Verificar se o Service Worker é suportado
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js')
+                // Registrar service worker com escopo correto
+                navigator.serviceWorker.register('sw.js', { scope: './' })
                 .then(function(registration) {
                     console.log('SW registered: ', registration);
                 })
@@ -226,6 +296,12 @@
                 });
             });
         });
+
+        // Verificar se estamos em modo standalone (app instalado)
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            console.log('Executando como PWA instalado');
+        }
 
         function formatarData(data) {
             return data.toLocaleDateString('pt-BR', {
@@ -530,20 +606,20 @@
         };
     </script>
     
-    <!-- Service Worker (sw.js seria um arquivo separado, mas incluindo inline para facilidade) -->
+    <!-- Service Worker inline para facilitar a implantação no GitHub -->
     <script>
-        // Este código normalmente estaria em um arquivo sw.js separado
-        // Mas estamos incluindo aqui para facilitar a implantação
+        // Registrar service worker
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'calculadora-antibioticos-v1';
+                const CACHE_NAME = 'calculadora-antibioticos-v2';
                 const urlsToCache = [
-                    '/',
-                    '/index.html',
-                    '/styles.css',
-                    '/app.js',
-                    '/icons/icon-192x192.png',
-                    '/icons/icon-512x512.png'
+                    './',
+                    './index.html',
+                    './manifest.json',
+                    'https://cdn.jsdelivr.net/gh/joaovitorsilva/fibrose-cistica-calc@main/icons/icon-192x192.png',
+                    'https://cdn.jsdelivr.net/gh/joaovitorsilva/fibrose-cistica-calc@main/icons/icon-512x512.png',
+                    'https://cdn.tailwindcss.com',
+                    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
                 ];
 
                 self.addEventListener('install', function(event) {
@@ -572,7 +648,7 @@
             const blob = new Blob([swCode], { type: 'application/javascript' });
             const swURL = URL.createObjectURL(blob);
             
-            navigator.serviceWorker.register(swURL)
+            navigator.serviceWorker.register(swURL, { scope: './' })
                 .then(function(registration) {
                     console.log('Service Worker registrado com sucesso: ', registration);
                 })
