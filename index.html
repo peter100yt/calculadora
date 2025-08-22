@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>Calculadora de Antibióticos - Fibrose Cística</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .result-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .info-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        
+        .page-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        /* Melhorias para mobile */
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .text-4xl {
+                font-size: 1.75rem;
+            }
+            .p-8 {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Estilo para a instalação do PWA */
+        #installButton {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #fff;
+            color: #667eea;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <!-- Botão de instalação do PWA -->
+    <button id="installButton" aria-label="Instalar aplicativo">📲</button>
+
+    <!-- Página Principal -->
+    <div id="pagina-principal" class="page-container">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-white mb-2">Calculadora de Antibióticos</h1>
+                <p class="text-white opacity-90">Fibrose Cística - Controle de Tratamento</p>
+            </div>
+
+            <!-- Main Form -->
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl card-shadow p-8 mb-8">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Cenário de Tratamento -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Cenário de Tratamento</label>
+                        <select id="cenario" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                            <option value="intervalado" selected>Intervalado - 28 dias de uso + 28 dias de descanso</option>
+                            <option value="continuo">Contínuo - Alternância a cada 28 dias</option>
+                        </select>
+                    </div>
+
+                    <!-- Antibiótico Inicial -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Antibiótico Inicial</label>
+                        <select id="antibiotico" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                            <option value="tobramicina">Tobramicina</option>
+                            <option value="colimicina">Colimicina</option>
+                        </select>
+                    </div>
+
+                    <!-- Data de Início -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Data de Início do Tratamento</label>
+                        <input type="date" id="dataInicio" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                    </div>
+
+                    <!-- Horário de Administração -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Horário de Administração</label>
+                        <select id="horario" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                            <option value="manha">Manhã</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+
+                    <!-- Quantidade de Ciclos -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Quantidade de Ciclos</label>
+                        <select id="quantidadeCiclos" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none">
+                            <option value="1" selected>1 Ciclo</option>
+                            <option value="2">2 Ciclos</option>
+                            <option value="3">3 Ciclos</option>
+                            <option value="4">4 Ciclos</option>
+                            <option value="5">5 Ciclos</option>
+                            <option value="6">6 Ciclos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div class="flex gap-4 mt-8">
+                    <button onclick="calcularTratamento()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        Calcular
+                    </button>
+                    <button onclick="resetarFormulario()" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        Resetar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Página de Resultados -->
+    <div id="pagina-resultados" class="page-container translate-x-full">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header com ícone voltar -->
+            <div class="flex items-center mb-8">
+                <button onclick="voltarParaPrincipal()" class="text-white text-5xl hover:text-gray-200 transition-all">
+                    ←
+                </button>
+                <h2 class="text-2xl font-bold text-white ml-4">Resultados</h2>
+            </div>
+
+            <!-- Resultados -->
+            <div id="resultados" class="max-w-4xl mx-auto">
+                <!-- Cronograma -->
+                <div class="bg-white rounded-2xl card-shadow p-8 mb-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        📅 Cronograma de Tratamento
+                    </h3>
+                    <div id="cronograma" class="space-y-4"></div>
+                </div>
+
+                <!-- Coletas de Secreção -->
+                <div class="bg-white rounded-2xl card-shadow p-8 mb-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        🧪 Coletas de Secreção
+                    </h3>
+                    <div id="coletas" class="space-y-4"></div>
+                </div>
+
+                <!-- Orientações -->
+                <div class="info-card rounded-2xl card-shadow p-8 text-white">
+                    <h3 class="text-2xl font-semibold mb-4 flex items-center">
+                        💡 Orientações para os Responsáveis
+                    </h3>
+                    <div id="orientacoes" class="space-y-3"></div>
+                </div>
+                
+                <!-- Botão para salvar/exportar -->
+                <div class="mt-6 text-center">
+                    <button onclick="exportarResultados()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                        📋 Exportar Resultados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Definir data padrão como hoje
+        document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
+
+        // Verificar se o Service Worker é suportado
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                })
+                .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+
+        // Gerenciar o botão de instalação do PWA
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            installButton.addEventListener('click', () => {
+                installButton.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        function formatarData(data) {
+            return data.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function adicionarDias(data, dias) {
+            const novaData = new Date(data);
+            novaData.setDate(novaData.getDate() + dias);
+            return novaData;
+        }
+
+        function calcularTratamento() {
+            const cenario = document.getElementById('cenario').value;
+            const antibiotico = document.getElementById('antibiotico').value;
+            const dataInicioString = document.getElementById('dataInicio').value;
+            const horario = document.getElementById('horario').value;
+            const quantidadeCiclos = parseInt(document.getElementById('quantidadeCiclos').value);
+
+            if (!dataInicioString) {
+                alert('Por favor, selecione uma data válida.');
+                return;
+            }
+
+            // Criar data corretamente para evitar problemas de fuso horário
+            const [ano, mes, dia] = dataInicioString.split('-');
+            const dataInicio = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+
+            const resultados = {
+                cenario,
+                antibiotico,
+                dataInicio: dataInicioString,
+                horario,
+                quantidadeCiclos,
+                timestamp: new Date().toISOString()
+            };
+
+            if (cenario === 'intervalado') {
+                calcularIntervalado(dataInicio, antibiotico, horario, quantidadeCiclos, resultados);
+            } else {
+                calcularContinuo(dataInicio, antibiotico, horario, quantidadeCiclos, resultados);
+            }
+
+            salvarNoHistorico(resultados);
+            exibirResultados(resultados);
+            irParaResultados();
+        }
+
+        function calcularIntervalado(dataInicio, antibiotico, horario, quantidadeCiclos, resultados) {
+            const cronograma = [];
+            const coletas = [];
+            
+            for (let ciclo = 1; ciclo <= quantidadeCiclos; ciclo++) {
+                const inicioUso = adicionarDias(dataInicio, (ciclo - 1) * 56);
+                const fimUso = adicionarDias(inicioUso, 27);
+                const inicioDescanso = adicionarDias(fimUso, 1);
+                const fimDescanso = adicionarDias(inicioDescanso, 27);
+                
+                cronograma.push({
+                    ciclo,
+                    tipo: 'uso',
+                    antibiotico,
+                    inicio: inicioUso,
+                    fim: fimUso,
+                    duracao: '28 dias'
+                });
+
+                cronograma.push({
+                    ciclo,
+                    tipo: 'descanso',
+                    inicio: inicioDescanso,
+                    fim: fimDescanso,
+                    duracao: '28 dias'
+                });
+
+                // Coleta após 10º dia de descanso
+                const dataColeta = adicionarDias(inicioDescanso, 9);
+                coletas.push({
+                    ciclo,
+                    data: dataColeta,
+                    tipo: 'Pós-descanso (10º dia)'
+                });
+            }
+
+            resultados.cronograma = cronograma;
+            resultados.coletas = coletas;
+            resultados.orientacoes = [
+                `Administrar ${antibiotico} ${horario === 'manha' ? 'pela manhã' : 'à noite'}`,
+                'Seguir rigorosamente os períodos de uso e descanso',
+                'Realizar coleta de secreção no 10º dia de cada período de descanso',
+                'Manter higiene adequada do equipamento de inalação',
+                'Em caso de dúvidas, entrar em contato com a equipe médica'
+            ];
+        }
+
+        function calcularContinuo(dataInicio, antibiotico, horario, quantidadeCiclos, resultados) {
+            const cronograma = [];
+            const coletas = [];
+            let antibioticoAtual = antibiotico;
+            
+            for (let ciclo = 1; ciclo <= quantidadeCiclos; ciclo++) {
+                const inicioCiclo = adicionarDias(dataInicio, (ciclo - 1) * 28);
+                const fimCiclo = adicionarDias(inicioCiclo, 27);
+                
+                cronograma.push({
+                    ciclo,
+                    tipo: 'uso',
+                    antibiotico: antibioticoAtual,
+                    inicio: inicioCiclo,
+                    fim: fimCiclo,
+                    duracao: '28 dias'
+                });
+
+                // Coleta no meio do ciclo (14º dia)
+                const dataColeta = adicionarDias(inicioCiclo, 13);
+                coletas.push({
+                    ciclo,
+                    data: dataColeta,
+                    tipo: `Durante uso de ${antibioticoAtual} (14º dia)`,
+                    antibiotico: antibioticoAtual
+                });
+
+                // Alternar antibiótico para o próximo ciclo
+                antibioticoAtual = antibioticoAtual === 'tobramicina' ? 'colimicina' : 'tobramicina';
+            }
+
+            resultados.cronograma = cronograma;
+            resultados.coletas = coletas;
+            resultados.orientacoes = [
+                `Iniciar com ${antibiotico} ${horario === 'manha' ? 'pela manhã' : 'à noite'}`,
+                'Alternar entre Tobramicina e Colimicina a cada 28 dias',
+                'Realizar coleta de secreção no 14º dia de cada ciclo',
+                'Não interromper o tratamento entre as trocas de antibiótico',
+                'Manter registro das datas de troca para não confundir'
+            ];
+        }
+
+        function exibirResultados(resultadosData = null) {
+            const resultados = resultadosData || JSON.parse(localStorage.getItem('ultimoCalculo'));
+            
+            if (!resultados) {
+                console.error('Nenhum resultado encontrado para exibir');
+                return;
+            }
+            
+            // Exibir cronograma
+            const cronogramaDiv = document.getElementById('cronograma');
+            cronogramaDiv.innerHTML = '';
+            
+            resultados.cronograma.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-lg border-l-4 ${
+                    item.tipo === 'uso' ? 'bg-green-50 border-green-500' : 'bg-blue-50 border-blue-500'
+                }`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">
+                                ${item.tipo === 'uso' ? '💊' : '😴'} 
+                                Ciclo ${item.ciclo} - ${item.tipo === 'uso' ? 'Uso' : 'Descanso'}
+                                ${item.antibiotico ? `(${item.antibiotico})` : ''}
+                            </h4>
+                            <p class="text-gray-600 mt-1">
+                                ${formatarData(item.inicio)} até ${formatarData(item.fim)}
+                            </p>
+                        </div>
+                        <span class="bg-white px-3 py-1 rounded-full text-sm font-medium text-gray-700">
+                            ${item.duracao}
+                        </span>
+                    </div>
+                `;
+                cronogramaDiv.appendChild(div);
+            });
+
+            // Exibir coletas
+            const coletasDiv = document.getElementById('coletas');
+            coletasDiv.innerHTML = '';
+            
+            resultados.coletas.forEach(coleta => {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-lg';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">
+                                🧪 Coleta ${coleta.ciclo} - ${coleta.tipo}
+                            </h4>
+                            <p class="text-gray-600 mt-1">${formatarData(coleta.data)}</p>
+                        </div>
+                        <span class="bg-yellow-200 px-3 py-1 rounded-full text-sm font-medium text-yellow-800">
+                            Importante
+                        </span>
+                    </div>
+                `;
+                coletasDiv.appendChild(div);
+            });
+
+            // Exibir orientações
+            const orientacoesDiv = document.getElementById('orientacoes');
+            orientacoesDiv.innerHTML = '';
+            
+            resultados.orientacoes.forEach(orientacao => {
+                const div = document.createElement('div');
+                div.className = 'flex items-start';
+                div.innerHTML = `
+                    <span class="text-white mr-3 mt-1">✓</span>
+                    <span class="text-white">${orientacao}</span>
+                `;
+                orientacoesDiv.appendChild(div);
+            });
+        }
+
+        function salvarNoHistorico(resultados) {
+            localStorage.setItem('ultimoCalculo', JSON.stringify(resultados));
+        }
+
+        function exportarResultados() {
+            const resultados = JSON.parse(localStorage.getItem('ultimoCalculo'));
+            if (!resultados) return;
+            
+            let texto = `Calculadora de Antibióticos - Fibrose Cística\n`;
+            texto += `Data do cálculo: ${new Date(resultados.timestamp).toLocaleDateString('pt-BR')}\n\n`;
+            
+            texto += `CENÁRIO: ${resultados.cenario === 'intervalado' ? 'Intervalado' : 'Contínuo'}\n`;
+            texto += `ANTIBIÓTICO INICIAL: ${resultados.antibiotico}\n`;
+            texto += `DATA DE INÍCIO: ${resultados.dataInicio}\n`;
+            texto += `HORÁRIO: ${resultados.horario === 'manha' ? 'Manhã' : 'Noite'}\n`;
+            texto += `CICLOS: ${resultados.quantidadeCiclos}\n\n`;
+            
+            texto += `CRONOGRAMA:\n`;
+            resultados.cronograma.forEach(item => {
+                texto += `- Ciclo ${item.ciclo}: ${item.tipo === 'uso' ? 'Uso' : 'Descanso'} ${item.antibiotico ? `(${item.antibiotico})` : ''}\n`;
+                texto += `  De: ${formatarData(item.inicio)}\n`;
+                texto += `  Até: ${formatarData(item.fim)}\n\n`;
+            });
+            
+            texto += `COLETAS DE SECREÇÃO:\n`;
+            resultados.coletas.forEach(coleta => {
+                texto += `- Ciclo ${coleta.ciclo}: ${coleta.tipo}\n`;
+                texto += `  Data: ${formatarData(coleta.data)}\n\n`;
+            });
+            
+            texto += `ORIENTAÇÕES:\n`;
+            resultados.orientacoes.forEach(orientacao => {
+                texto += `- ${orientacao}\n`;
+            });
+            
+            // Criar um blob com o texto
+            const blob = new Blob([texto], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            // Criar um link para download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cronograma-antibioticos-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Limpar
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        function resetarFormulario() {
+            document.getElementById('cenario').value = 'intervalado';
+            document.getElementById('antibiotico').value = 'tobramicina';
+            document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
+            document.getElementById('horario').value = 'manha';
+            document.getElementById('quantidadeCiclos').value = '1';
+        }
+
+        function irParaResultados() {
+            const paginaPrincipal = document.getElementById('pagina-principal');
+            const paginaResultados = document.getElementById('pagina-resultados');
+            
+            paginaPrincipal.style.transform = 'translateX(-100%)';
+            paginaResultados.style.transform = 'translateX(0)';
+        }
+
+        function voltarParaPrincipal() {
+            const paginaPrincipal = document.getElementById('pagina-principal');
+            const paginaResultados = document.getElementById('pagina-resultados');
+            
+            paginaPrincipal.style.transform = 'translateX(0)';
+            paginaResultados.style.transform = 'translateX(100%)';
+        }
+
+        // Inicialização da página
+        window.onload = function() {
+            // Verificar se há resultados salvos
+            if (localStorage.getItem('ultimoCalculo')) {
+                // Opcional: perguntar se deseja carregar o último cálculo
+            }
+        };
+    </script>
+    
+    <!-- Service Worker (sw.js seria um arquivo separado, mas incluindo inline para facilidade) -->
+    <script>
+        // Este código normalmente estaria em um arquivo sw.js separado
+        // Mas estamos incluindo aqui para facilitar a implantação
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'calculadora-antibioticos-v1';
+                const urlsToCache = [
+                    '/',
+                    '/index.html',
+                    '/styles.css',
+                    '/app.js',
+                    '/icons/icon-192x192.png',
+                    '/icons/icon-512x512.png'
+                ];
+
+                self.addEventListener('install', function(event) {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(function(cache) {
+                                return cache.addAll(urlsToCache);
+                            })
+                    );
+                });
+
+                self.addEventListener('fetch', function(event) {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(function(response) {
+                                if (response) {
+                                    return response;
+                                }
+                                return fetch(event.request);
+                            }
+                        )
+                    );
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swURL)
+                .then(function(registration) {
+                    console.log('Service Worker registrado com sucesso: ', registration);
+                })
+                .catch(function(error) {
+                    console.log('Falha no registro do Service Worker: ', error);
+                });
+        }
+    </script>
+</body>
+</html>
